@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "scoring-model"
+version = "0.1.0"
+description = "Implémentation d'un outil de scoring de crédit pour calculer la probabilité qu'un client rembourse son crédit ou non."
+authors = ["fly <111392306+flys-lf@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+mlflow = "^2.17.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
