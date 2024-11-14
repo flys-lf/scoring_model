@@ -433,41 +433,6 @@ def main(debug = False):
         }
         feat_importance = kfold_lightgbm(df, num_folds= 10, stratified= False, debug= debug)
 
-        # # Set MLFlow environement
-        # mlflow.set_tracking_uri(uri="http://localhost:8080")
-        # mlflow.set_experiment("lgbm_experiment")  # Set the experiment name for MLflow
-        # with mlflow.start_run():
-        #     params_dict = {
-        #         'nthread': 4,
-        #         'n_estimators':10000,
-        #         'learning_rate':0.02,
-        #         'num_leaves':34,
-        #         'colsample_bytree':0.9497036,
-        #         'subsample':0.8715623,
-        #         'max_depth':8,
-        #         'reg_alpha':0.041545473,
-        #         'reg_lambda':0.0735294,
-        #         'min_split_gain':0.0222415,
-        #         'min_child_weight':39.3259775,
-        #         'silent':-1,
-        #         'verbose':-1,
-        #     }
-        #     mlflow.log_params(params_dict)
-        #     mlflow.log_metric("accuracy", accuracy)
-        #     # Set a tag that we can use to remind ourselves what this run was for
-        #     mlflow.set_tag("Training Info", "Light GBM Classifier Credit scoring")
-
-        #     # Infer the model signature
-        #     signature = infer_signature(X_train, lr.predict(X_train))
-        #     # Log the model
-        #     model_info = mlflow.sklearn.log_model(
-        #         sk_model=clf,
-        #         artifact_path="credit_score_lgbm",
-        #         signature=signature,
-        #         input_example=X_train,
-        #         registered_model_name="tracking-quickstart",
-        #     )
-
 if __name__ == "__main__":
     submission_file_name = "submission_kernel02.csv"
     with timer("Full model run"):
