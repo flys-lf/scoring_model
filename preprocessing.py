@@ -15,11 +15,13 @@
 # - Removed index from features
 # - Use standard KFold CV (not stratified)
 
-import numpy as np
-import pandas as pd
 import gc
 import time
 from contextlib import contextmanager
+
+import numpy as np
+import pandas as pd
+
 from lightgbm import LGBMClassifier
 from lightgbm.callback import log_evaluation, early_stopping
 from sklearn.metrics import roc_auc_score, roc_curve
@@ -29,8 +31,9 @@ import seaborn as sns
 import warnings
 import re
 warnings.simplefilter(action='ignore', category=FutureWarning)
-import mlflow
-from mlflow.models import infer_signature
+
+
+PATH_FILE = 'input'
 
 @contextmanager
 def timer(title):
@@ -49,8 +52,8 @@ def one_hot_encoder(df, nan_as_category = True):
 # Preprocess application_train.csv and application_test.csv
 def application_train_test(num_rows = None, nan_as_category = False):
     # Read data and merge
-    df = pd.read_csv('input/application_train.csv', nrows= num_rows)
-    test_df = pd.read_csv('input/application_test.csv', nrows= num_rows)
+    df = pd.read_csv(f'{PATH_FILE}/application_train.csv', nrows= num_rows)
+    test_df = pd.read_csv(f'{PATH_FILE}/application_test.csv', nrows= num_rows)
     print("Train samples: {}, test samples: {}".format(len(df), len(test_df)))
     df = pd.concat([df,test_df]).reset_index()
     # Optional: Remove 4 applications with XNA CODE_GENDER (train set)
@@ -76,8 +79,8 @@ def application_train_test(num_rows = None, nan_as_category = False):
 
 # Preprocess bureau.csv and bureau_balance.csv
 def bureau_and_balance(num_rows = None, nan_as_category = True):
-    bureau = pd.read_csv('input/bureau.csv', nrows = num_rows)
-    bb = pd.read_csv('input/bureau_balance.csv', nrows = num_rows)
+    bureau = pd.read_csv(f'{PATH_FILE}/bureau.csv', nrows = num_rows)
+    bb = pd.read_csv(f'{PATH_FILE}/bureau_balance.csv', nrows = num_rows)
     bb, bb_cat = one_hot_encoder(bb, nan_as_category)
     bureau, bureau_cat = one_hot_encoder(bureau, nan_as_category)
     
@@ -134,7 +137,7 @@ def bureau_and_balance(num_rows = None, nan_as_category = True):
 
 # Preprocess previous_applications.csv
 def previous_applications(num_rows = None, nan_as_category = True):
-    prev = pd.read_csv('input/previous_application.csv', nrows = num_rows)
+    prev = pd.read_csv(f'{PATH_FILE}/previous_application.csv', nrows = num_rows)
     prev, cat_cols = one_hot_encoder(prev, nan_as_category= True)
     # Days 365.243 values -> nan
     prev['DAYS_FIRST_DRAWING'].replace(365243, np.nan, inplace= True)
@@ -180,7 +183,7 @@ def previous_applications(num_rows = None, nan_as_category = True):
 
 # Preprocess POS_CASH_balance.csv
 def pos_cash(num_rows = None, nan_as_category = True):
-    pos = pd.read_csv('input/POS_CASH_balance.csv', nrows = num_rows)
+    pos = pd.read_csv(f'{PATH_FILE}/POS_CASH_balance.csv', nrows = num_rows)
     pos, cat_cols = one_hot_encoder(pos, nan_as_category= True)
     # Features
     aggregations = {
@@ -201,7 +204,7 @@ def pos_cash(num_rows = None, nan_as_category = True):
     
 # Preprocess installments_payments.csv
 def installments_payments(num_rows = None, nan_as_category = True):
-    ins = pd.read_csv('input/installments_payments.csv', nrows = num_rows)
+    ins = pd.read_csv(f'{PATH_FILE}/installments_payments.csv', nrows = num_rows)
     ins, cat_cols = one_hot_encoder(ins, nan_as_category= True)
     # Percentage and difference paid in each installment (amount paid and installment value)
     ins['PAYMENT_PERC'] = ins['AMT_PAYMENT'] / ins['AMT_INSTALMENT']
@@ -234,7 +237,7 @@ def installments_payments(num_rows = None, nan_as_category = True):
 
 # Preprocess credit_card_balance.csv
 def credit_card_balance(num_rows = None, nan_as_category = True):
-    cc = pd.read_csv('input/credit_card_balance.csv', nrows = num_rows)
+    cc = pd.read_csv(f'{PATH_FILE}/credit_card_balance.csv', nrows = num_rows)
     cc, cat_cols = one_hot_encoder(cc, nan_as_category= True)
     # General aggregations
     cc.drop(['SK_ID_PREV'], axis= 1, inplace = True)
@@ -246,144 +249,8 @@ def credit_card_balance(num_rows = None, nan_as_category = True):
     gc.collect()
     return cc_agg
 
-# LightGBM GBDT with KFold or Stratified KFold
-# Parameters from Tilii kernel: https://www.kaggle.com/tilii7/olivier-lightgbm-parameters-by-bayesian-opt/code
-def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
-    df = df.rename(columns = lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
-    print(df.shape)
-    # Divide in training/validation and test data
-    train_df = df[df['TARGET'].notnull()]
-    test_df = df[df['TARGET'].isnull()]
-    print("Starting LightGBM. Train shape: {}, test shape: {}".format(train_df.shape, test_df.shape))
-    del df
-    gc.collect()
-    # Cross validation model
-    if stratified:
-        folds = StratifiedKFold(n_splits= num_folds, shuffle=True, random_state=1001)
-    else:
-        folds = KFold(n_splits= num_folds, shuffle=True, random_state=1001)
-    
-    # Create arrays and dataframes to store results
-    oof_preds = np.zeros(train_df.shape[0])
-    sub_preds = np.zeros(test_df.shape[0])
-    feature_importance_df = pd.DataFrame()
-    feats = [f for f in train_df.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
-    for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['TARGET'])):
-        train_x, train_y = train_df[feats].iloc[train_idx], train_df['TARGET'].iloc[train_idx]
-        valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['TARGET'].iloc[valid_idx]
-
-        # LightGBM parameters found by Bayesian optimization
-        clf = LGBMClassifier(
-            # **params_dict
-            nthread=4,
-            n_estimators=10000,
-            learning_rate=0.02,
-            num_leaves=34,
-            colsample_bytree=0.9497036,
-            subsample=0.8715623,
-            max_depth=8,
-            reg_alpha=0.041545473,
-            reg_lambda=0.0735294,
-            min_split_gain=0.0222415,
-            min_child_weight=39.3259775,
-            silent=-1,
-            verbose=-1,
-        )
-
-        # clf.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)], 
-        #     eval_metric= 'auc', verbose= 200, early_stopping_rounds= 200)
-        train_x = convert_object_to_float(train_x)
-        valid_x = convert_object_to_float(valid_x)
-        test_df = convert_object_to_float(test_df)
-        clf.fit(train_x, train_y, 
-            eval_set=[(train_x, train_y), (valid_x, valid_y)],
-            eval_metric='auc',
-            callbacks=[early_stopping(200), log_evaluation(200)]
-        )
-
-        oof_preds[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1] # out of fold
-        sub_preds += clf.predict_proba(test_df[feats], num_iteration=clf.best_iteration_)[:, 1] / folds.n_splits
-
-        fold_importance_df = pd.DataFrame()
-        fold_importance_df["feature"] = feats
-        fold_importance_df["importance"] = clf.feature_importances_
-        fold_importance_df["fold"] = n_fold + 1
-        feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
-        metric = roc_auc_score(valid_y, oof_preds[valid_idx])
-        print('Fold %2d AUC : %.6f' % (n_fold + 1, roc_auc_score(valid_y, oof_preds[valid_idx])))
-        # del clf, train_x, train_y, valid_x, valid_y
-        # gc.collect()
-
-    print('Full AUC score %.6f' % roc_auc_score(train_df['TARGET'], oof_preds))
-    # Write submission file and plot feature importance
-    if not debug:
-        test_df['TARGET'] = sub_preds
-        test_df[['SK_ID_CURR', 'TARGET']].to_csv(submission_file_name, index= False)
-    display_importances(feature_importance_df)
-
-    # -------------------------------------------------------------------------------
-    # Set MLflow Experiment ---------------------------------------------------------
-    mlflow.set_tracking_uri(uri="http://localhost:8080")
-    mlflow.set_experiment("lgbm_clf_credit_score_experiment")
-    with mlflow.start_run():
-        params = {
-            "nthread":6,
-            "n_estimators":10000,
-            "learning_rate":0.02,
-            "num_leaves":34,
-            "colsample_bytree":0.9497036,
-            "subsample":0.8715623,
-            "max_depth":8,
-            "reg_alpha":0.041545473,
-            "reg_lambda":0.0735294,
-            "min_split_gain":0.0222415,
-            "min_child_weight":39.3259775,
-            "silent":-1,
-            "verbose":-1
-        }
-        mlflow.log_params(params)
-
-        # Log the loss metric
-        mlflow.log_metric("accuracy", metric) # à renommer roc_auc
-        # Set a tag that we can use to remind ourselves what this run was for
-        mlflow.set_tag("Training Info", "LGBM Clf model for credit score")
-        # Infer the model signature
-        signature = infer_signature(train_x, clf.predict(train_x))
-        # Log the model
-        model_info = mlflow.sklearn.log_model(
-            sk_model=clf,
-            artifact_path="lgbm_credit_score",
-            signature=signature,
-            registered_model_name="lgbm_credit_score",
-        )
-
-    return feature_importance_df
-
-# Display/plot feature importance
-def display_importances(feature_importance_df_):
-    cols = feature_importance_df_[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance", ascending=False)[:40].index
-    best_features = feature_importance_df_.loc[feature_importance_df_.feature.isin(cols)]
-    plt.figure(figsize=(8, 10))
-    sns.barplot(x="importance", y="feature", data=best_features.sort_values(by="importance", ascending=False))
-    plt.title('LightGBM Features (avg over folds)')
-    plt.tight_layout()
-    plt.savefig('lgbm_importances01.png')
-
-
-def convert_object_to_float(df):
-    # Itérer sur les colonnes du dataframe
-    for col in df.columns:
-        # Vérifier si le type de la colonne est 'object'
-        if df[col].dtype == 'object':
-            try:
-                # Convertir la colonne en type float
-                df[col] = df[col].astype(float)
-            except ValueError:
-                print(f"Conversion failed for column: {col}")
-    return df
-
-def main(debug = False):
-    num_rows = 10000 if debug else None
+def preprocessing(num_rows=10000, debug = False):
+    num_rows = num_rows if debug else None
     df = application_train_test(num_rows)
     with timer("Process bureau and bureau_balance"):
         bureau = bureau_and_balance(num_rows)
@@ -415,10 +282,10 @@ def main(debug = False):
         df = df.join(cc, how='left', on='SK_ID_CURR')
         del cc
         gc.collect()
-    # with timer("Run LightGBM with kfold"):
-    #     feat_importance = kfold_lightgbm(df, num_folds= 10, stratified= False, debug= debug)
+    print(f"df shape after preprocessing : {df.shape}")
+    return df
 
 if __name__ == "__main__":
     submission_file_name = "submission_kernel02.csv"
-    with timer("Full model run"):
-        main(debug=False)
+    with timer("Full Preprocessing run"):
+        df = preprocessing(debug = False)
