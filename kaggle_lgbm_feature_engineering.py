@@ -113,7 +113,7 @@ def bureau_and_balance(num_rows = None, nan_as_category = True):
     cat_aggregations = {}
     for cat in bureau_cat: cat_aggregations[cat] = ['mean']
     for cat in bb_cat: cat_aggregations[cat + "_MEAN"] = ['mean']
-    
+   
     bureau_agg = bureau.groupby('SK_ID_CURR').agg({**num_aggregations, **cat_aggregations})
     bureau_agg.columns = pd.Index(['BURO_' + e[0] + "_" + e[1].upper() for e in bureau_agg.columns.tolist()])
     # Bureau: Active credits - using only numerical aggregations
@@ -161,7 +161,7 @@ def previous_applications(num_rows = None, nan_as_category = True):
     cat_aggregations = {}
     for cat in cat_cols:
         cat_aggregations[cat] = ['mean']
-    
+
     prev_agg = prev.groupby('SK_ID_CURR').agg({**num_aggregations, **cat_aggregations})
     prev_agg.columns = pd.Index(['PREV_' + e[0] + "_" + e[1].upper() for e in prev_agg.columns.tolist()])
     # Previous Applications: Approved Applications - only numerical features
@@ -190,7 +190,7 @@ def pos_cash(num_rows = None, nan_as_category = True):
     }
     for cat in cat_cols:
         aggregations[cat] = ['mean']
-    
+
     pos_agg = pos.groupby('SK_ID_CURR').agg(aggregations)
     pos_agg.columns = pd.Index(['POS_' + e[0] + "_" + e[1].upper() for e in pos_agg.columns.tolist()])
     # Count pos cash accounts
@@ -261,12 +261,12 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
         folds = StratifiedKFold(n_splits= num_folds, shuffle=True, random_state=1001)
     else:
         folds = KFold(n_splits= num_folds, shuffle=True, random_state=1001)
+    
     # Create arrays and dataframes to store results
     oof_preds = np.zeros(train_df.shape[0])
     sub_preds = np.zeros(test_df.shape[0])
     feature_importance_df = pd.DataFrame()
     feats = [f for f in train_df.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
-    
     for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[feats], train_df['TARGET'])):
         train_x, train_y = train_df[feats].iloc[train_idx], train_df['TARGET'].iloc[train_idx]
         valid_x, valid_y = train_df[feats].iloc[valid_idx], train_df['TARGET'].iloc[valid_idx]
@@ -286,8 +286,8 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
             min_split_gain=0.0222415,
             min_child_weight=39.3259775,
             silent=-1,
-            verbose=-1, 
-            )
+            verbose=-1,
+        )
 
         # clf.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)], 
         #     eval_metric= 'auc', verbose= 200, early_stopping_rounds= 200)
@@ -295,9 +295,10 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
         valid_x = convert_object_to_float(valid_x)
         test_df = convert_object_to_float(test_df)
         clf.fit(train_x, train_y, 
-        eval_set=[(train_x, train_y), (valid_x, valid_y)], 
-        eval_metric='auc',
-        callbacks=[early_stopping(200), log_evaluation(200)])
+            eval_set=[(train_x, train_y), (valid_x, valid_y)],
+            eval_metric='auc',
+            callbacks=[early_stopping(200), log_evaluation(200)]
+        )
 
         oof_preds[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1]
         sub_preds += clf.predict_proba(test_df[feats], num_iteration=clf.best_iteration_)[:, 1] / folds.n_splits
@@ -318,9 +319,10 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
         test_df['TARGET'] = sub_preds
         test_df[['SK_ID_CURR', 'TARGET']].to_csv(submission_file_name, index= False)
     display_importances(feature_importance_df)
-    mlflow.set_tracking_uri(uri="http://localhost:8080")
 
-# Create a new MLflow Experiment
+    # -------------------------------------------------------------------------------
+    # Set MLflow Experiment ---------------------------------------------------------
+    mlflow.set_tracking_uri(uri="http://localhost:8080")
     mlflow.set_experiment("lgbm_clf_credit_score_experiment")
     with mlflow.start_run():
         params = {
@@ -340,23 +342,21 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
         }
         mlflow.log_params(params)
 
-    # Log the loss metric
+        # Log the loss metric
         mlflow.log_metric("accuracy", metric)
-
-    # Set a tag that we can use to remind ourselves what this run was for
+        # Set a tag that we can use to remind ourselves what this run was for
         mlflow.set_tag("Training Info", "LGBM Clf model for credit score")
-
-    # Infer the model signature
+        # Infer the model signature
         signature = infer_signature(train_x, clf.predict(train_x))
-
-    # Log the model
+        # Log the model
         model_info = mlflow.sklearn.log_model(
             sk_model=clf,
             artifact_path="lgbm_credit_score",
             signature=signature,
-            input_example=train_x,
+            # input_example=train_x,
             registered_model_name="lgbm_credit_score",
         )
+
     return feature_importance_df
 
 # Display/plot feature importance
@@ -383,7 +383,7 @@ def convert_object_to_float(df):
     return df
 
 def main(debug = False):
-    num_rows = 10000 if debug else None
+    num_rows = 60000 if debug else None
     df = application_train_test(num_rows)
     with timer("Process bureau and bureau_balance"):
         bureau = bureau_and_balance(num_rows)
@@ -416,21 +416,6 @@ def main(debug = False):
         del cc
         gc.collect()
     with timer("Run LightGBM with kfold"):
-        params_dict = {
-            'nthread': 4,
-            'n_estimators':10000,
-            'learning_rate':0.02,
-            'num_leaves':34,
-            'colsample_bytree':0.9497036,
-            'subsample':0.8715623,
-            'max_depth':8,
-            'reg_alpha':0.041545473,
-            'reg_lambda':0.0735294,
-            'min_split_gain':0.0222415,
-            'min_child_weight':39.3259775,
-            'silent':-1,
-            'verbose':-1,
-        }
         feat_importance = kfold_lightgbm(df, num_folds= 10, stratified= False, debug= debug)
 
 if __name__ == "__main__":
