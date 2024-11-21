@@ -249,7 +249,7 @@ def credit_card_balance(num_rows = None, nan_as_category = True):
     gc.collect()
     return cc_agg
 
-def preprocessing(num_rows=10000, debug = False):
+def preprocessing(num_rows=30000, debug = False):
     num_rows = num_rows if debug else None
     df = application_train_test(num_rows)
     with timer("Process bureau and bureau_balance"):

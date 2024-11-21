@@ -16,7 +16,7 @@ df_train["TARGET"] = df_train["TARGET"].astype('category')
 y = df_train["TARGET"].cat.codes
 # on ne prend que les colonnes quantitatives
 x = df_train.select_dtypes(np.number)
-x = x.loc[:, ~(x.isna().any())] 
+x = x.loc[:, ~(x.isna().any())]
 # on ajoute une colonne pour la constante
 x_stat = add_constant(x)
 
