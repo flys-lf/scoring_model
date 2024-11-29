@@ -415,8 +415,8 @@ def main(debug = False):
         df = df.join(cc, how='left', on='SK_ID_CURR')
         del cc
         gc.collect()
-    # with timer("Run LightGBM with kfold"):
-    #     feat_importance = kfold_lightgbm(df, num_folds= 10, stratified= False, debug= debug)
+    with timer("Run LightGBM with kfold"):
+        feat_importance = kfold_lightgbm(df, num_folds= 10, stratified= False, debug= debug)
 
 if __name__ == "__main__":
     submission_file_name = "submission_kernel02.csv"

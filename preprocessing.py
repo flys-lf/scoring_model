@@ -289,3 +289,15 @@ if __name__ == "__main__":
     submission_file_name = "submission_kernel02.csv"
     with timer("Full Preprocessing run"):
         df = preprocessing(debug = False)
+        df.to_csv('data/df_preprocessed.csv', encoding='utf-8', index=None)
+    with timer("DF with selected features"):
+        feat_importance = pd.read_csv('input/feat_importance.csv')
+        top_features = feat_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance", ascending=False)[:40].index.tolist()
+        top_features = ['SK_ID_CURR', 'TARGET'] + top_features
+        cols_with_missing_values = [col for col in df.columns if df[col].isnull().mean() > 0 and 'TARGET' not in col]
+        for col in cols_with_missing_values:
+            df[col] = df[col].fillna(0)
+
+        df_final = df[np.intersect1d(df.columns, top_features)]
+        df_final.to_csv('data/df_final.csv', encoding='utf-8', index=None)
+
