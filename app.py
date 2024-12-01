@@ -56,15 +56,7 @@ def index():
 async def predict(request: Request):
     result = await request.json()
     df = pd.DataFrame.from_dict(result)
-
-    # # Preprocessing input data
-    # df_processed = preprocessing(df, num_rows=None, debug = False)
-    # feats = [f for f in df_processed.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
-    # df_processed = df_processed[feats]
-    # # Scaling data
-    # scaler = MinMaxScaler()
-    # df_scaled = scaler.fit_transform(df_processed)
-
+    
     # Use the loaded model to make predictions on the DataFrame
     prediction = model.predict(df)
     probability = model.predict_proba(df)
@@ -75,7 +67,4 @@ async def predict(request: Request):
     probability_df = pd.DataFrame(probability, columns=['proba_classe_0', 'proba_classe_1'])
 
     # Return the predictions as a JSON response
-    # return {"prediction": list(prediction)}
     return {"prediction": prediction_df, "probability": probability_df}
-
-    # return {'prediction': int(prediction[0]), 'probability': probability}
