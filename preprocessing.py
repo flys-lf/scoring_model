@@ -18,18 +18,18 @@
 import gc
 import time
 from contextlib import contextmanager
-
+import warnings
+import pickle
 import numpy as np
 import pandas as pd
 
-from lightgbm import LGBMClassifier
-from lightgbm.callback import log_evaluation, early_stopping
-from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.model_selection import KFold, StratifiedKFold
-import matplotlib.pyplot as plt
-import seaborn as sns
-import warnings
-import re
+# from lightgbm import LGBMClassifier
+# from lightgbm.callback import log_evaluation, early_stopping
+# from sklearn.metrics import roc_auc_score, roc_curve
+# from sklearn.model_selection import KFold, StratifiedKFold
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -50,21 +50,28 @@ def one_hot_encoder(df, nan_as_category = True):
     return df, new_columns
 
 # Preprocess application_train.csv and application_test.csv
-def application_train_test(num_rows = None, nan_as_category = False):
-    # Read data and merge
-    df = pd.read_csv(f'{PATH_FILE}/application_train.csv', nrows= num_rows)
-    test_df = pd.read_csv(f'{PATH_FILE}/application_test.csv', nrows= num_rows)
-    print("Train samples: {}, test samples: {}".format(len(df), len(test_df)))
-    df = pd.concat([df,test_df]).reset_index()
+def application(df_application, num_rows = None, nan_as_category = False):
+    # Read data
+    if num_rows is not None:
+        df = df_application.head(n = num_rows)
+    else :
+        df = df_application
+    # df = pd.read_csv(application_filepath, nrows= num_rows)
+    # df = pd.read_csv(f'{PATH_FILE}/application_train.csv', nrows= num_rows)
+    print(f"Train samples: {len(df)}")
+
+    # Join with application_test
+    # test_df = pd.read_csv(f'{PATH_FILE}/application_test.csv', nrows= num_rows)
+    # print("Train samples: {}, test samples: {}".format(len(df), len(test_df)))
+    # df = pd.concat([df,test_df]).reset_index()
+
     # Optional: Remove 4 applications with XNA CODE_GENDER (train set)
     df = df[df['CODE_GENDER'] != 'XNA']
-    
     # Categorical features with Binary encode (0 or 1; two categories)
     for bin_feature in ['CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY']:
         df[bin_feature], uniques = pd.factorize(df[bin_feature])
     # Categorical features with One-Hot encode
     df, cat_cols = one_hot_encoder(df, nan_as_category)
-    
     # NaN values for DAYS_EMPLOYED: 365.243 -> nan
     df['DAYS_EMPLOYED'].replace(365243, np.nan, inplace= True)
     # Some simple new features (percentages)
@@ -73,7 +80,7 @@ def application_train_test(num_rows = None, nan_as_category = False):
     df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS'] # revenu par membre du foyer
     df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL'] # part de l'annuité par rapport au salaire total du client
     df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT'] # taux de paiement(somme remboursée) par rapport à la somme finale du crédit par année (previous application)
-    del test_df
+    # del test_df
     gc.collect()
     return df
 
@@ -249,9 +256,9 @@ def credit_card_balance(num_rows = None, nan_as_category = True):
     gc.collect()
     return cc_agg
 
-def preprocessing(num_rows=30000, debug = False):
+def preprocessing(df_application, num_rows=30000, debug = False):
     num_rows = num_rows if debug else None
-    df = application_train_test(num_rows)
+    df = application(df_application = df_application, num_rows = num_rows)
     with timer("Process bureau and bureau_balance"):
         bureau = bureau_and_balance(num_rows)
         print("Bureau df shape:", bureau.shape)
@@ -283,21 +290,36 @@ def preprocessing(num_rows=30000, debug = False):
         del cc
         gc.collect()
     print(f"df shape after preprocessing : {df.shape}")
-    return df
-
-if __name__ == "__main__":
-    submission_file_name = "submission_kernel02.csv"
-    with timer("Full Preprocessing run"):
-        df = preprocessing(debug = False)
-        df.to_csv('data/df_preprocessed.csv', encoding='utf-8', index=None)
-    with timer("DF with selected features"):
+    with timer("Selection of feature"):
         feat_importance = pd.read_csv('input/feat_importance.csv')
         top_features = feat_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance", ascending=False)[:40].index.tolist()
         top_features = ['SK_ID_CURR', 'TARGET'] + top_features
         cols_with_missing_values = [col for col in df.columns if df[col].isnull().mean() > 0 and 'TARGET' not in col]
         for col in cols_with_missing_values:
             df[col] = df[col].fillna(0)
-
+        
         df_final = df[np.intersect1d(df.columns, top_features)]
-        df_final.to_csv('data/df_final.csv', encoding='utf-8', index=None)
+        print(f"df shape after feature selection : {df_final.shape}")
+    return df_final
 
+# Save preprocessing pkl
+pkl_filename = "preprocessing.pkl"
+with open(pkl_filename, 'wb') as file:
+    pickle.dump(preprocessing, file)
+
+if __name__ == "__main__":
+    with timer("Full Preprocessing run"):
+        # df = preprocessing(debug = False)
+        df_application = pd.read_csv(f'{PATH_FILE}/application_train.csv')
+        df = preprocessing(df_application = df_application, debug = False)
+        df.to_csv('data/df_final__test.csv', encoding='utf-8', index=None)
+    # with timer("DF with selected features"):
+    #     feat_importance = pd.read_csv('input/feat_importance.csv')
+    #     top_features = feat_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance", ascending=False)[:40].index.tolist()
+    #     top_features = ['SK_ID_CURR', 'TARGET'] + top_features
+    #     cols_with_missing_values = [col for col in df.columns if df[col].isnull().mean() > 0 and 'TARGET' not in col]
+    #     for col in cols_with_missing_values:
+    #         df[col] = df[col].fillna(0)
+
+    #     df_final = df[np.intersect1d(df.columns, top_features)]
+    #     df_final.to_csv('data/df_final__test.csv', encoding='utf-8', index=None)

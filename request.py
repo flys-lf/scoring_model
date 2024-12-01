@@ -17,8 +17,12 @@ response = requests.post(url, data= payload)
 # Check the HTTP response status code
 if response.status_code == 200:
     # Parse and print the JSON response (assuming it contains the prediction)
-    prediction = response.json()
-    print(prediction)
+    result = response.json()
+    # print(prediction)
+    prediction_df = pd.DataFrame.from_dict(result["prediction"])
+    proba_df = pd.DataFrame.from_dict(result["probability"])
+    print(prediction_df)
+    print(proba_df)
 else:
     # Handle the case where the API request failed
     print(f'API Request Failed with Status Code: {response.status_code}')
