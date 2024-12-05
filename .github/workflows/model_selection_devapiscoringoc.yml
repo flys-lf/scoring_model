@@ -44,6 +44,8 @@ jobs:
           path: |
             release.zip
             !venv/
+      - name: Clean up Docker (if applicable)
+        run: docker system prune -f
 
   deploy:
     runs-on: ubuntu-latest
