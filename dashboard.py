@@ -132,7 +132,8 @@ if uploaded_file is not None:
         df_shap = df_processed[feats]
 
         # récupération de l'index correspondant à l'identifiant du client
-        # idx = int(lecture_X_test_clean()[lecture_X_test_clean()['sk_id_curr']==ID_client].index[0])
+        idx_selected = int(df_processed[df_processed['SK_ID_CURR']==id_client].index[0])
+        st.write(idx_selected)
 
 
         # # Fits the explainer
@@ -152,8 +153,29 @@ if uploaded_file is not None:
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(df_shap)
         fig = shap.summary_plot(shap_values, df_shap)
-        st.pyplot(fig)
+        st.pyplot(fig, bbox_inches='tight')
 
-        # shap.summary_plot(shap_values[0], df_shap)
+        print(shap_values)
+        # st_shap(shap.force_plot(explainer.expected_value[1],
+        #     shap_values[1][idx_selected,:],
+        #     df_shap.iloc[idx_selected,:],
+        #     link='logit',
+        #     figsize=(20, 8),
+        #     ordering_keys=True,
+        #     text_rotation=0,
+        #     contribution_threshold=0.05)
+        # )
+        import streamlit.components.v1 as components
+        
+        def st_shap(plot, height=None):
+            shap_html = f"<head>{shap.getjs()}</head><body>{plot.html()}</body>"
+            components.html(shap_html, height=height)
+
+        # visualize the first prediction's explanation (use matplotlib=True to avoid Javascript)
+        st_shap(shap.force_plot(explainer.expected_value, shap_values[idx_selected,:], df_shap.iloc[idx_selected,:]))
+
+        # visualize the training set predictions
+        st_shap(shap.force_plot(explainer.expected_value, shap_values, df_shap), 400)
+
 
 
