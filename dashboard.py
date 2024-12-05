@@ -7,8 +7,10 @@ import requests
 
 from preprocessing import preprocessing
 from sklearn.preprocessing import MinMaxScaler
+import streamlit.components.v1 as components
 
-API_URL = "http://127.0.0.1:8000/predict"
+# API_URL = "http://127.0.0.1:8000/predict"
+API_URL = "https://apitestscoring-bre0d5dbasdsewhw.francecentral-01.azurewebsites.net/predict"
 
 def request_prediction(url, data):
     payload = data.to_json()
@@ -31,8 +33,8 @@ def request_prediction(url, data):
 
 @st.cache_resource(max_entries=1, ttl=3600 * 24)
 def read_uploaded_file_as_df(num_rows = None):
-    # if uploaded_file is not None:
     df = pd.read_csv(uploaded_file, nrows= num_rows)
+
     with st.spinner('Preprocessing In Progress...'):
         time.sleep(5)
         # Preprocessing input data
@@ -53,7 +55,6 @@ def read_uploaded_file_as_df(num_rows = None):
 #-------------------------------------------------------------------------------------------------------------------------------------------
 st.set_page_config(
     page_title='Scoring Client',
-    # page_icon = "🎖️",
     page_icon = "images/logo.jpg",
     initial_sidebar_state="expanded",
     layout="wide"
@@ -68,7 +69,7 @@ with st.expander("Lecture des données Application", expanded=False, icon=":mate
     uploaded_file = st.file_uploader("Choisissez un fichier", type={"csv"})
 
 if uploaded_file is not None:
-    df, df_processed, df_scaled_with_id = read_uploaded_file_as_df(num_rows = 10)
+    df, df_processed, df_scaled_with_id = read_uploaded_file_as_df(num_rows = None)
 
     if not df.empty :
         with st.expander("Aperçu Données"):
@@ -86,10 +87,6 @@ if uploaded_file is not None:
             id_client = st.selectbox("Veuillez sélectionner le numéro de votre client à l'aide du menu déroulant :",
                                     (liste_clients))
             st.write(f"Vous avez sélectionné l'identifiant N° : **{id_client}**")
-        with col2:
-            st.write("")
-        with col3:
-            st.write("")
 
 
         with st.expander("Fiche Client"):
@@ -108,8 +105,7 @@ if uploaded_file is not None:
         if predict_button:
             pred = None
             prediction_df, proba_df = request_prediction(API_URL, data = df_scaled_filtered)
-            # st.dataframe(prediction_df)
-            # st.dataframe(proba_df)
+
             with st.container(border=True):
                 proba = round(proba_df["proba_classe_1"][0]*100, 2)
                 prediction = round(prediction_df["y_pred"][0])
@@ -156,17 +152,7 @@ if uploaded_file is not None:
         st.pyplot(fig, bbox_inches='tight')
 
         print(shap_values)
-        # st_shap(shap.force_plot(explainer.expected_value[1],
-        #     shap_values[1][idx_selected,:],
-        #     df_shap.iloc[idx_selected,:],
-        #     link='logit',
-        #     figsize=(20, 8),
-        #     ordering_keys=True,
-        #     text_rotation=0,
-        #     contribution_threshold=0.05)
-        # )
-        import streamlit.components.v1 as components
-        
+
         def st_shap(plot, height=None):
             shap_html = f"<head>{shap.getjs()}</head><body>{plot.html()}</body>"
             components.html(shap_html, height=height)
@@ -176,6 +162,3 @@ if uploaded_file is not None:
 
         # visualize the training set predictions
         st_shap(shap.force_plot(explainer.expected_value, shap_values, df_shap), 400)
-
-
-
