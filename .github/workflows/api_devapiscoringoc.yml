@@ -69,3 +69,4 @@ jobs:
           app-name: 'DevAPIScoringOC'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CB11F7BD907441EDAB67EEC8D7FB2524 }}
+          startup-command: 'uvicorn --bind 0.0.0.0:8000 app:app'
