@@ -4,6 +4,7 @@
 
 # FAST API
 import pickle
+import uvicorn
 from fastapi import FastAPI, Request
 import pandas as pd
 
