@@ -121,32 +121,39 @@ if uploaded_file is not None:
                 elif decision == "Refusé" :
                     st.error(f"Crédit {decision}")
 
-st.header("Shap Value")
-import shap
-import pickle
-model = pickle.load(open("model.pkl", "rb"))
+        # ==================================================================================================================================
+        st.divider()
+        st.header("Shap Value")
+        import shap
+        import pickle
+        model = pickle.load(open("model.pkl", "rb"))
 
-feats = [f for f in df_processed.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
-df_shap = df_processed[feats]
-# # Fits the explainer
-# # explainer = shap.Explainer(model.predict, df_shap)
-# # explainer = shap.TreeExplainer(model.predict, df_shap)
-# explainer = shap.TreeExplainer(model.predict)
+        feats = [f for f in df_processed.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
+        df_shap = df_processed[feats]
 
-# # Calculates the SHAP values - It takes some time
-# shap_values = explainer.shap_values(df_shap)
-# shap_obj = explainer(df_shap)
-# # Evaluate SHAP values
-# # shap.plots.beeswarm(shap_values)
+        # récupération de l'index correspondant à l'identifiant du client
+        # idx = int(lecture_X_test_clean()[lecture_X_test_clean()['sk_id_curr']==ID_client].index[0])
 
-# shap.plots.beeswarm(shap_obj)
 
-shap.initjs()
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(df_shap)
-fig = shap.summary_plot(shap_values, df_shap)
-st.pyplot(fig)
+        # # Fits the explainer
+        # # explainer = shap.Explainer(model.predict, df_shap)
+        # # explainer = shap.TreeExplainer(model.predict, df_shap)
+        # explainer = shap.TreeExplainer(model.predict)
 
-# shap.summary_plot(shap_values[0], df_shap)
+        # # Calculates the SHAP values - It takes some time
+        # shap_values = explainer.shap_values(df_shap)
+        # shap_obj = explainer(df_shap)
+        # # Evaluate SHAP values
+        # # shap.plots.beeswarm(shap_values)
+
+        # shap.plots.beeswarm(shap_obj)
+
+        shap.initjs()
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(df_shap)
+        fig = shap.summary_plot(shap_values, df_shap)
+        st.pyplot(fig)
+
+        # shap.summary_plot(shap_values[0], df_shap)
 
 
