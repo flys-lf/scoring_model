@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies with Poetry
         run: |
           poetry install --no-root |
-          poetry lock [--no-update]
+          poetry lock --no-update
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
