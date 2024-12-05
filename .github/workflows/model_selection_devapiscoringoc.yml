@@ -22,13 +22,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create and start virtual environment
+      - name: Install Poetry
         run: |
-          python -m venv venv
-          source venv/bin/activate
+          curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="$HOME/.local/bin:$PATH"
       
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install dependencies with Poetry
+        run: |
+          poetry install --no-root
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
