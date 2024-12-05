@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - testapioc
+name: Build and deploy Python app to Azure Web App - DevAPIScoringOC
 
 on:
   push:
@@ -26,11 +26,12 @@ jobs:
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           export PATH="$HOME/.local/bin:$PATH"
-
+      
       - name: Install dependencies with Poetry
         run: |
-          poetry install --no-root
-
+          poetry install --no-root |
+          poetry lock --no-update
+        
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
@@ -43,6 +44,8 @@ jobs:
           path: |
             release.zip
             !venv/
+      - name: Clean up Docker (if applicable)
+        run: docker system prune -f
 
   deploy:
     runs-on: ubuntu-latest
@@ -52,6 +55,9 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
     steps:
+      - name: Check disk usage
+        run: df -h
+        
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
@@ -65,6 +71,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'ApiScoringOC'
+          app-name: 'DevAPIScoringOC'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E07F32995F78444ABC39F02357EE04CA }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_886DAE77B08E41598A991A3AE7E64CC6 }}

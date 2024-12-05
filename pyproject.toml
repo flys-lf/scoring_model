@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "scoring-model"
+name = "scoring_model"
 version = "0.1.0"
 description = "Implémentation d'un outil de scoring de crédit pour calculer la probabilité qu'un client rembourse son crédit ou non."
 authors = ["fly <111392306+flys-lf@users.noreply.github.com>"]
