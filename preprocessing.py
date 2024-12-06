@@ -79,7 +79,7 @@ def application(df_application, num_rows = None, nan_as_category = False):
     df['INCOME_CREDIT_PERC'] = df['AMT_INCOME_TOTAL'] / df['AMT_CREDIT'] # 
     df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS'] # revenu par membre du foyer
     df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL'] # part de l'annuité par rapport au salaire total du client
-    df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT'] # taux de paiement(somme remboursée) par rapport à la somme finale du crédit par année (previous application)
+    df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT'] # taux de remboursement / taux de paiement(somme remboursée) par rapport à la somme finale du crédit par année (previous application)
     # del test_df
     gc.collect()
     return df
@@ -301,11 +301,6 @@ def preprocessing(df_application, num_rows=30000, debug = False):
         df_final = df[np.intersect1d(df.columns, top_features)]
         print(f"df shape after feature selection : {df_final.shape}")
     return df_final
-
-# Save preprocessing pkl
-pkl_filename = "preprocessing.pkl"
-with open(pkl_filename, 'wb') as file:
-    pickle.dump(preprocessing, file)
 
 if __name__ == "__main__":
     with timer("Full Preprocessing run"):
