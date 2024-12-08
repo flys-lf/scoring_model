@@ -65,11 +65,11 @@ def application_train_test(num_rows = None, nan_as_category = False):
     # NaN values for DAYS_EMPLOYED: 365.243 -> nan
     df['DAYS_EMPLOYED'].replace(365243, np.nan, inplace= True)
     # Some simple new features (percentages)
-    df['DAYS_EMPLOYED_PERC'] = df['DAYS_EMPLOYED'] / df['DAYS_BIRTH']
-    df['INCOME_CREDIT_PERC'] = df['AMT_INCOME_TOTAL'] / df['AMT_CREDIT']
-    df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS']
-    df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL']
-    df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT']
+    df['DAYS_EMPLOYED_PERC'] = df['DAYS_EMPLOYED'] / df['DAYS_BIRTH'] # taux de jours employés par rapport à l'âge
+    df['INCOME_CREDIT_PERC'] = df['AMT_INCOME_TOTAL'] / df['AMT_CREDIT'] # 
+    df['INCOME_PER_PERSON'] = df['AMT_INCOME_TOTAL'] / df['CNT_FAM_MEMBERS'] # revenu par membre du foyer
+    df['ANNUITY_INCOME_PERC'] = df['AMT_ANNUITY'] / df['AMT_INCOME_TOTAL'] # part de l'annuité par rapport au salaire total du client
+    df['PAYMENT_RATE'] = df['AMT_ANNUITY'] / df['AMT_CREDIT'] # taux de paiement(somme remboursée) par rapport à la somme finale du crédit par année (previous application)
     del test_df
     gc.collect()
     return df
@@ -250,6 +250,7 @@ def credit_card_balance(num_rows = None, nan_as_category = True):
 # Parameters from Tilii kernel: https://www.kaggle.com/tilii7/olivier-lightgbm-parameters-by-bayesian-opt/code
 def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
     df = df.rename(columns = lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
+    print(df.shape)
     # Divide in training/validation and test data
     train_df = df[df['TARGET'].notnull()]
     test_df = df[df['TARGET'].isnull()]
@@ -300,7 +301,7 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
             callbacks=[early_stopping(200), log_evaluation(200)]
         )
 
-        oof_preds[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1]
+        oof_preds[valid_idx] = clf.predict_proba(valid_x, num_iteration=clf.best_iteration_)[:, 1] # out of fold
         sub_preds += clf.predict_proba(test_df[feats], num_iteration=clf.best_iteration_)[:, 1] / folds.n_splits
 
         fold_importance_df = pd.DataFrame()
@@ -343,7 +344,7 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
         mlflow.log_params(params)
 
         # Log the loss metric
-        mlflow.log_metric("accuracy", metric)
+        mlflow.log_metric("accuracy", metric) # à renommer roc_auc
         # Set a tag that we can use to remind ourselves what this run was for
         mlflow.set_tag("Training Info", "LGBM Clf model for credit score")
         # Infer the model signature
@@ -353,7 +354,6 @@ def kfold_lightgbm(df, num_folds, stratified = False, debug= False):
             sk_model=clf,
             artifact_path="lgbm_credit_score",
             signature=signature,
-            # input_example=train_x,
             registered_model_name="lgbm_credit_score",
         )
 
@@ -383,7 +383,7 @@ def convert_object_to_float(df):
     return df
 
 def main(debug = False):
-    num_rows = 60000 if debug else None
+    num_rows = 10000 if debug else None
     df = application_train_test(num_rows)
     with timer("Process bureau and bureau_balance"):
         bureau = bureau_and_balance(num_rows)
@@ -421,4 +421,4 @@ def main(debug = False):
 if __name__ == "__main__":
     submission_file_name = "submission_kernel02.csv"
     with timer("Full model run"):
-        main(debug=True)
+        main(debug=False)

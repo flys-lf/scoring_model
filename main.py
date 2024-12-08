@@ -1,25 +1,26 @@
-import mlflow
-import lightgbm as lgb
-import tensorflow as tf  # Import TensorFlow library
+import numpy as np
+import statsmodels.api as sm
 
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-import joblib  # Import Joblib library for object serialization
+from statsmodels.tools import add_constant
 
-# Set MLFlow environement
-mlflow.set_tracking_uri(uri="http://localhost:8080")
-mlflow.set_experiment("iris_experiment")  # Set the experiment name for MLflow
+from preprocessing import preprocessing
 
-mlflow.autolog()
+# import data preprocessed
+df = preprocessing()
 
-# load iris data
-iris = load_iris()
-X, y = iris.data, iris.target
+df_train = df.copy()
+df_train = df[df['TARGET'].notnull()]
+df_train["TARGET"] = df_train["TARGET"].astype('category')
 
-# Split the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# on définit x et y
+y = df_train["TARGET"].cat.codes
+# on ne prend que les colonnes quantitatives
+x = df_train.select_dtypes(np.number)
+x = x.loc[:, ~(x.isna().any())]
+# on ajoute une colonne pour la constante
+x_stat = add_constant(x)
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.fit_transform(X_test)
+# on ajuste le modèle
+model = sm.Logit(y, x_stat)
+result = model.fit()
+print(result.summary())
