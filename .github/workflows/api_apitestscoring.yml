@@ -33,7 +33,8 @@ jobs:
         run: |
           poetry install --no-root |
           poetry lock --no-update |
-          poetry update package
+          poetry update package |
+          poetry install
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run pytest
