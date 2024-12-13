@@ -22,6 +22,7 @@ streamlit = "^1.40.2"
 shap = "^0.46.0"
 imblearn = "^0.0"
 pytest = "^8.3.4"
+evidently = "0.2.8"
 
 
 [tool.poetry.group.dev.dependencies]
