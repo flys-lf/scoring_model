@@ -40,6 +40,8 @@ jobs:
       - name: Run pytest
         run: |
           poetry shell |
+          echo which python |
+          echo pip list |
           python -m pytest  -v -s
 
       - name: Zip artifact for deployment
