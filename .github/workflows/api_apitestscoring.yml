@@ -76,4 +76,4 @@ jobs:
         with:
           app-name: 'APItestScoring'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_827F0300302044BFBE6ECBBB80A5AD1C }}# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_827F0300302044BFBE6ECBBB80A5AD1C }}
