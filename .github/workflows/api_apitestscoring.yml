@@ -38,6 +38,7 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run pytest
         run: |
+          poetry shell |
           python -m pytest  -v -s
 
       - name: Zip artifact for deployment
