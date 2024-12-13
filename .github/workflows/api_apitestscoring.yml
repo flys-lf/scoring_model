@@ -9,6 +9,7 @@ on:
     branches:
       - api
       - model_selection
+      - main
   workflow_dispatch:
 
 jobs:
