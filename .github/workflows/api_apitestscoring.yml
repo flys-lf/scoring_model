@@ -30,7 +30,6 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
       - name: Install dependencies with Poetry
         run: |
-          poetry cache clear |
           poetry cache clear --all|
           poetry install --no-root |
           poetry lock --no-update |
