@@ -33,16 +33,13 @@ jobs:
         run: |
           poetry install --no-root |
           poetry lock --no-update |
-          poetry update package |
-          poetry install
+          poetry update package 
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run pytest
         run: |
-          poetry shell |
-          echo which python |
-          echo pip list |
-          python -m pytest  -v -s
+          poetry install |
+          poetry run pytest
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
