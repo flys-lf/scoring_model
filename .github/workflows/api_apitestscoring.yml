@@ -35,6 +35,9 @@ jobs:
           poetry install --no-root |
           poetry lock --no-update |
           poetry update package 
+      - name: Run uvicon app
+        run: |
+          poetry run uvicorn app:app
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run pytest
