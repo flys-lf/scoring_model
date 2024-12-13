@@ -35,11 +35,21 @@ jobs:
           poetry install --no-root |
           poetry lock --no-update |
           poetry update package 
+          
+  Launch-app:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Run uvicon app
         run: |
           poetry run uvicorn app:app
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+    queue:
+      - my-queue
+      
+  Pytest:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Run pytest
         run: |
           poetry install |
@@ -55,6 +65,8 @@ jobs:
           path: |
             release.zip
             !venv/
+    queue:
+    - my-queue
 
   deploy:
     runs-on: ubuntu-latest
