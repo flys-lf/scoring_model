@@ -34,15 +34,16 @@ jobs:
           poetry install --no-root |
           poetry lock --no-update |
           poetry update package 
-      - name: Run uvicon app
-        run: |
-          poetry run uvicorn app:app
+      # - name: Run uvicon app
+      #   run: |
+      #     poetry run uvicorn app:app
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Run pytest
         run: |
           poetry install |
           poetry run pytest
+
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
