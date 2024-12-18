@@ -8,7 +8,8 @@ import uvicorn
 from fastapi import FastAPI, Request
 import pandas as pd
 
-model = pickle.load(open("model.pkl", "rb"))
+MODEL_FILE = 'model_LGBM_Tuned_500cols.pkl'
+model = pickle.load(open(f"{MODEL_FILE}", "rb"))
 
 app = FastAPI()
 
