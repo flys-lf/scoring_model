@@ -9,8 +9,8 @@ from evidently.metrics import DataDriftTable
 from evidently.metrics import DatasetDriftMetric
 
 # Import data
-df_initial = pd.read_csv('input/application_train.csv')
-df_new = pd.read_csv('input/application_test.csv')
+df_initial = pd.read_csv('data/df_train_clean.csv')
+df_new = pd.read_csv('data/df_test_clean.csv')
 
 # Numerical features
 feats = [f for f in df_initial.columns if f not in ['TARGET','SK_ID_CURR','SK_ID_BUREAU','SK_ID_PREV','index']]
