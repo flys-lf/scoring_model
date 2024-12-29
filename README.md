@@ -18,6 +18,7 @@ Mettre en production le modèle de scoring de prédiction à l’aide d’une AP
 Mettre en œuvre une approche globale MLOps de bout en bout, du tracking des expérimentations à l’analyse en production du data drift.
 
 # Guideline
+- Données disponible ici : https://www.kaggle.com/c/home-credit-default-risk/data
 - Installer les dépendances :
 ```
 poetry install
@@ -30,4 +31,3 @@ mlflow server --host 127.0.0.1 --port 8080
 
 - Repositoty contenant le code de déploiement de l'API et du dashboard Streamlit ici : https://github.com/flys-lf/deploiement_api
 - API de prédiction disponible à cet URL : https://scoringapi-ewckf3cxfrdbadhw.northeurope-01.azurewebsites.net
-- Données disponible ici : https://www.kaggle.com/c/home-credit-default-risk/data
