@@ -1,6 +1,7 @@
 # scoring_model
 Projet réalisé dans le cadre d'un parcours certifiant de Data Scientist OpenClassroom : Implémentez un modèle de scoring (2 mois / 80h).
 Repository contenant le code de preprocessing et de la modélisation.
+
 **Repositoty contenant le code de déploiement de l'API et du dashboard Streamlit ici :** https://github.com/flys-lf/deploiement_api
 
 # Contexte :
