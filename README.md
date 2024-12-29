@@ -2,7 +2,7 @@
 Projet réalisé dans le cadre d'un parcours certifiant de Data Scientist OpenClassroom : Implémentez un modèle de scoring (2 mois / 80h).
 Repository contenant le code de preprocessing et de la modélisation.
 
-**Repositoty contenant le code de déploiement de l'API et du dashboard Streamlit ici :** https://github.com/flys-lf/deploiement_api
+**Repository contenant le code de déploiement de l'API et du dashboard Streamlit ici :** https://github.com/flys-lf/deploiement_api
 
 # Contexte :
 Une société financière, nommée "Prêt à dépenser" propose des crédits à la consommation pour des personnes ayant peu ou pas du tout d'historique de prêt.
@@ -29,5 +29,5 @@ poetry shell
 mlflow server --host 127.0.0.1 --port 8080
 ```
 
-- Repositoty contenant le code de déploiement de l'API et du dashboard Streamlit ici : https://github.com/flys-lf/deploiement_api
+- Repository contenant le code de déploiement de l'API et du dashboard Streamlit ici : https://github.com/flys-lf/deploiement_api
 - API de prédiction disponible à cet URL : https://scoringapi-ewckf3cxfrdbadhw.northeurope-01.azurewebsites.net
