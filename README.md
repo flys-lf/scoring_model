@@ -1,6 +1,9 @@
 # scoring_model
 Projet réalisé dans le cadre d'un parcours certifiant de Data Scientist OpenClassroom : Implémentez un modèle de scoring (2 mois / 80h).
 Repository contenant le code de preprocessing et de la modélisation.
+
+**Repository contenant le code de déploiement de l'API et du dashboard Streamlit ici :** https://github.com/flys-lf/deploiement_api
+
 # Contexte :
 Une société financière, nommée "Prêt à dépenser" propose des crédits à la consommation pour des personnes ayant peu ou pas du tout d'historique de prêt.
 Elle souhaite mettre en œuvre un outil de “scoring crédit” pour calculer la probabilité qu’un client rembourse son crédit, puis classifie la demande en crédit accordé ou refusé. Elle souhaite donc développer un algorithme de classification en s’appuyant sur des sources de données variées (données comportementales, données provenant d'autres institutions financières, etc.)
@@ -15,6 +18,7 @@ Mettre en production le modèle de scoring de prédiction à l’aide d’une AP
 Mettre en œuvre une approche globale MLOps de bout en bout, du tracking des expérimentations à l’analyse en production du data drift.
 
 # Guideline
+- Données disponible ici : https://www.kaggle.com/c/home-credit-default-risk/data
 - Installer les dépendances :
 ```
 poetry install
@@ -25,6 +29,5 @@ poetry shell
 mlflow server --host 127.0.0.1 --port 8080
 ```
 
-- Repositoty contenant le code de déploiement de l'API et du dashboard Streamlit ici : https://github.com/flys-lf/deploiement_api
+- Repository contenant le code de déploiement de l'API et du dashboard Streamlit ici : https://github.com/flys-lf/deploiement_api
 - API de prédiction disponible à cet URL : https://scoringapi-ewckf3cxfrdbadhw.northeurope-01.azurewebsites.net
-- Données disponible ici : https://www.kaggle.com/c/home-credit-default-risk/data
